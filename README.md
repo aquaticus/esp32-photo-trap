@@ -167,6 +167,9 @@ Enable support for infrared illuminator.
 
 The program uses **ESP32 IDF v4.2** enviroment. You must first install it, for more detailed information see [Getting started](https://docs.espressif.com/projects/esp-idf/en/latest/get-started/) guide.
 
+Clone repository:
+
+``git clone --recursive https://github.com/aquaticus/esp32-photo-trap.git``
 
 ## Configuration
 
