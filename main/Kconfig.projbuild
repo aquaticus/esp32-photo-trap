@@ -1,0 +1,274 @@
+menu "Photo Trap configuration"
+
+menu "Connection WIFI/MQTT"
+
+config ESP_WIFI_SSID
+    string "WiFi SSID"
+    default "myssid"
+    help
+	SSID (network name) for the example to connect to.
+
+config ESP_WIFI_PASSWORD
+    string "WiFi Password"
+    default "mypassword"
+    help
+	WiFi password for the application to use.
+
+config MQTT_BROKER_TCP_URI
+    string "MQTT URI"
+    default "mqtt://[username][:password]@host.domain[:port]"
+    help
+	Format: mqtt://[username][:password]@host.domain[:port]
+
+config PARALLEL_PROCESSING
+	bool "Start WiFi/MQTT transmission immediately"
+	default n
+	help
+	Transmit pictures while camera is still working. 
+	Disable if jpeg images are corruted (camera performance issues).
+
+menu "Connection status LED"
+config STATUS_LED
+	bool "Enable status LED"
+	default n
+	help
+	Enabled use of LED to indicate status of the connection.
+
+if STATUS_LED
+
+config STATUS_LED_GPIO
+	int "Status LED GPIO number"
+	default 33
+	help
+	Specify IO pin number where status LED is connected.
+	
+config STATUS_LED_INVERTED
+	bool "GPIO LED output inverted"
+	default n
+	help
+	Set if LED is activated by low state.
+endif	
+
+endmenu
+endmenu
+
+
+choice PICTUE_RESOLUTION
+	prompt "Picture resolution"
+	default FRAMESIZE_UXGA
+	help
+	Resolution of picture. Lower resolution gives higher framerate.
+	Choose only resolutions supported by camera sensor.
+	
+config FRAMESIZE_96x96
+    bool "96x96"
+    select ccccccc   
+config FRAMESIZE_QQVGA
+	bool "160x120"
+config FRAMESIZE_QQVGA2
+	bool "128x160"
+config FRAMESIZE_QCIF
+	bool "176x144"
+config FRAMESIZE_HQVGA
+	bool "240x176"
+config FRAMESIZE_240x240
+	bool "240x240"
+config FRAMESIZE_QVGA
+	bool "320x240"
+config FRAMESIZE_CIF
+	bool "400x296 CIF"
+config FRAMESIZE_VGA
+	bool "640x480 VGA"
+config FRAMESIZE_SVGA
+	bool "800x600 SVGA"
+config FRAMESIZE_XGA
+	bool "1024x768 XGA"
+config FRAMESIZE_SXGA
+	bool "1280x1024 SXGA"
+config FRAMESIZE_UXGA
+    bool "1600x1200 UXGA"
+config FRAMESIZE_QXGA
+	bool "2048x1536 QXGA"
+endchoice
+
+choice CAMERA_MODEL
+    prompt "Camera Board"
+    default CAMERA_MODEL_AI_THINKER
+    help
+        Camera may be connected to ESP32 using different pins.
+
+config CAMERA_MODEL_WROVER_KIT
+    bool "WROVER-KIT With OV2640 Module"
+config CAMERA_MODEL_ESP_EYE
+    bool "ESP_EYE DevKit"
+config CAMERA_MODEL_M5STACK_PSRAM
+    bool "M5Stack Camera With PSRAM"
+config CAMERA_MODEL_AI_THINKER
+    bool "ESP32-CAM by AI-Thinker"
+config CAMERA_MODEL_TTGO_TCAMERA_V05
+    bool "TTGO T-Camera V05"
+config CAMERA_MODEL_TTGO_TCAMERA_V17
+    bool "TTGO T-Camera V17"
+config CAMERA_MODEL_TTGO_TJOURNAL
+    bool "TTGO T-Journal"
+endchoice
+
+
+menu "Operation setup"
+
+config TIME_BETWEEN_PHOTOS_MS
+	int "Delay between photos [ms]"
+	default 0
+	help
+	Delay in microseconds between consecutive photos.
+	The time should not be lower than time of taking of 1 frame.
+	It takes around 1500 ms to take 1600x1200 image, lower resolution it is faster.
+	
+config CAMERA_WORKING_PERIOD_SECS
+    int "Maximum working period [secs]"
+    default 10
+    help
+	How long camera will work when activated.
+
+config CAMERA_NUMBER_OF_PICTURES
+    int "Maximum number of pictures"
+    default -1
+    help
+	Number of pictures to take when activated. 
+	Set -1 for no limit. 
+	
+config CAMERA_TIMER_SECS
+    int "Activate camera by the timer [secs]"
+    default -1
+    help
+	Starts taking pictures without PIR sensor activation.
+	To create time elpase sequence disable PIR sensor.
+	When PIR is enabled, motion detection resets the timer.
+	Set -1 to disable.
+endmenu
+
+
+menu "Time synchronization"
+
+config TIME_SYNRONIZATION
+	bool "Enabe time synchorization with NTP server"
+	default n
+	help
+	Synchronize time with NTP server. Make sense only if SD card support is enabled.
+
+if TIME_SYNRONIZATION
+
+config NTP_SERVER
+	string "NTP server"
+	default "pool.ntp.org"
+	help
+	"NTP server address, e.g. pool.ntp.org"
+
+
+choice SNTP_TIME_SYNC_METHOD
+    prompt "Time synchronization method"
+    default SNTP_TIME_SYNC_METHOD_IMMED
+    help
+        Time synchronization method.
+
+    config SNTP_TIME_SYNC_METHOD_IMMED
+        bool "update time immediately when received"
+    config SNTP_TIME_SYNC_METHOD_SMOOTH
+        bool "update time with smooth method (adjtime)"
+endchoice
+
+endif
+
+endmenu
+
+config SDCARD_ENABLED
+    bool "Enable SD card support"
+    default n
+    help
+	When enabled images are stored on SD card.
+
+config HOME_ASSISTANT_MQTT_DISCOVERY
+    bool "Enable Home Assistant MQTT discovery"
+    default y
+    help
+	Home Assistant automatically detects camera if this option is enabled.
+	To work properly, discovery option must be enabled in Home Assistant.
+	Add:
+	 discovery:
+	   true
+	to configuration.yaml
+	or enable discovery in MQTT integration.
+
+menu "PIR sensor/Switch"
+
+config PIR_ENABLED
+	bool "Enable PIR/Switch sensor support"
+	default y
+	help
+	Enable support for PIR sensor or button activation activation.
+
+if PIR_ENABLED
+config PIR_GPIO
+	int "PIR/Switch GPIO number"
+	default 33
+	help
+	Specify IO pin number where PIR sensor is connected.
+	The pin must be connected to RTC to wake up the chip.
+	Usable pins: 0,2,4,12-15,25-27,32-39
+
+config PIR_INPUT_PULLUP
+	bool "Enable pullup for PIR/Switch pin"
+	default n
+	help
+	Enables internal pullup resistor for specified PIR pin.
+	Typically PIR module does not require this option enabled.
+	If a button is used instead of PIR enable this option.
+	
+config PIR_INPUT_INVERTED
+	bool "PIR/Switch input inverted"
+	default n
+	help
+	Set if PIR/Switch indicates motion by low state.
+
+endif
+
+endmenu
+
+menu "IR illuminator"
+	
+config IR_ILLUMINATOR_ENABLED
+	bool "Enable IR illuminator support"
+	default y
+	help
+	Enable IR illuminator when taking photos
+
+if IR_ILLUMINATOR_ENABLED
+
+config IR_ILLUMINATOR_GPIO
+	int "IR illuminator GPIO number"
+	default 21
+	help
+	Specify IO pin number where IR illuminator is connected.
+	
+config IR_ILLUMINATOR_INVERTED
+	bool "IR illuminator output inverted"
+	default n
+	help
+	Set if IR illuminator is activated by low state.
+
+config IR_ILLUMINATOR_HOLD_PIN_STATE_IN_SLEEP
+	bool "Hold state of illuminator pin during sleep mode"
+	default n
+	help
+	Keeps state of the pin in sleep mode. This is required if illumitator
+	keeps working during sleep.
+	Only works for RTC pads 0,2,4,12-15,25-27,32-39. If enabled for other
+	pin reports an error.
+	For non RTC pins, external circuit must be used to keep off state during
+	sleep, typically pull-up or pull-down resistor.
+
+endif
+
+endmenu
+
+endmenu

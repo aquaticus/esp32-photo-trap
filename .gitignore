@@ -1,0 +1,10 @@
+build/
+/.gdbinit.ci
+.settings/
+/image/
+.idea/
+sdkconfig.old
+sdkconfig
+_sdkconfig
+sdkconfig.ci
+.vscode/
